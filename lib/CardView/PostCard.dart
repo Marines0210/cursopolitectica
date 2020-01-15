@@ -1,4 +1,6 @@
 import 'package:cursopolitecnica/Model/Post.dart';
+import 'package:cursopolitecnica/Model/User.dart';
+import 'package:cursopolitecnica/Pages/FormPage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -8,8 +10,8 @@ por lo tanto reconstruiremos todo el diseño  con setState que le pertenece solo
 class PostCard extends StatefulWidget {
   //Crearemos un constructor  para poder obtener el post y mostarlo en nuestro card
   Post post;
-
-  PostCard(this.post);
+  User user;
+  PostCard(this.post,this.user);
 
   //createState es el encargado de reconstruir todo el diseño que se encuentra en nuestra clase estado
   //Ahora aqui no nos sirve el post asi que lo pasaremos a la clase estado que ahi si nos sirve
@@ -22,27 +24,37 @@ class PostCard extends StatefulWidget {
 class PostCardState extends State<PostCard> {
   //Creamos un contructor pata recibir el post que se nos envia en la parte de arriba ya que aqui si nos servira el post
   Post post;
-
+  User userPost=User();
   PostCardState(this.post);
+  @override
+  void initState() {
+    getUserPost();
+  }
+  getUserPost() async{
+    var user=await User().getUser(post.userId);
+    if(user !=null && user is !Widget){
+      setState(() {
+        this.userPost=user;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     /*Container es un widget muy util con este podemos agregar diseños mas personalizados especificandoles un tamaño
       en el ancho y alto colores margeny padding
     * */
-    return Container(
+    return InkWell(
+        onTap: ()=> goFormPage(),
+    child:Container(
         color: Colors.white,
         child: Card(
           elevation: 15,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          margin: EdgeInsets.all(10),
+          margin: EdgeInsets.all(20),
           color: Colors.greenAccent,
           child: ListTile(
-            leading: Image.asset(
-              "images/newyork.png",
-              width: 100,
-            ),
             title: Text(post.title),
             subtitle: Column(
               children: <Widget>[
@@ -51,6 +63,11 @@ class PostCardState extends State<PostCard> {
               ],
             ),
           ),
-        ));
+        )));
+  }
+
+
+  goFormPage(){
+      Navigator.push(context, MaterialPageRoute(builder: (context)=>FormPage(post:this.post,user: widget.user,)));
   }
 }

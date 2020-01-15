@@ -11,24 +11,24 @@ class HttPExecute {
     return Validate.connectionError(method:loadDelete);
   }
 
-  get() {
+  Future get() {
     return Validate.connectionError(method:loadGet);
   }
 
-  post(Map parameters) {
+  post(parameters) {
     return Validate.connectionError(methodParam:loadPost,parameters: parameters);
   }
 
-  put(Map parameters) {
+  put( parameters) {
     return Validate.connectionError(methodParam:loadPut,parameters: parameters);
   }
 
-  loadGet() async {
+  Future loadGet() async {
     var response = await http.get(this.endPointUrl,);
     return getResponse(response);
   }
 
-  loadPost(Map parameters) async {
+  loadPost(parameters) async {
     var response = await http.post(this.endPointUrl,body: parameters);
     return getResponse(response);
   }
@@ -37,7 +37,7 @@ class HttPExecute {
     var response = await http.delete(this.endPointUrl,);
     return getResponse(response);
   }
-  loadPut(Map parameters) async {
+  loadPut(parameters) async {
     var response = await http.put(this.endPointUrl);
     return getResponse(response);
   }

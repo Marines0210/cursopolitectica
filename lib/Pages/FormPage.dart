@@ -1,126 +1,121 @@
+import 'package:cursopolitecnica/Common/Validate.dart';
+import 'package:cursopolitecnica/Model/Post.dart';
+import 'package:cursopolitecnica/Model/User.dart';
 import 'package:flutter/material.dart';
-/* Estamos usando StatefulWidget porque estaremos actualizando datos y los debemos de mostrar en la vista
-por lo tanto reconstruiremos todo el diseño  con setState que le pertenece solo a StatefulWidget
-* */
-class FormPage extends StatefulWidget {
 
-  //createState es el encargado de reconstruir todo el diseño que se encuentra en nuestra clase estado
+class FormPage extends StatefulWidget {
+  Post post;
+  User user=User();
+  VoidCallbackParam voidCallBackParam;
+  FormPage({this.post,this.voidCallBackParam,this.user});
   @override
-  State<StatefulWidget> createState() => FormPageState();
+  State<StatefulWidget> createState() => FormPageState(this.post);
 }
 
 class FormPageState extends State<FormPage> {
-  /*TextEditingController es un controlador que le colocaremos a cada caja de texto para obtener el texto que
-  tiene cada una de estas
-   */
-  TextEditingController ctrlTitle = TextEditingController();
-  TextEditingController ctrlPost = TextEditingController();
+  Post post;
 
-  //Creamos una llave para poder realizar acciones en nuestro formulario
+  FormPageState(this.post);
+
+  TextEditingController ctrlTitle=TextEditingController();
+  TextEditingController ctrlBody=TextEditingController();
+  GlobalKey<ScaffoldState>keyScaffold=GlobalKey();
   GlobalKey<FormState> keyForm = GlobalKey();
+  bool enableTextField=true;
 
+  @override
+  void initState() {
+    if (this.post != null) {
+      ctrlBody.text = this.post.body;
+      ctrlTitle.text = this.post.title;
+      enableTextField=(this.post.userId==widget.user.id)?true:false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // estamos creando una pagina por lo tanto necesitamos usar Scaffold para agregar app bar
     return Scaffold(
-      //Aqui colocamos el appbar con un text para asignarle un titulo
+      key: keyScaffold,
         appBar: AppBar(
           title: Text("Formulario"),
         ),
-        /*El primer widget es importante es agregar SingleChildScrollView porque sino lo agregamos al abrir el teclado
-        aparecera una barra de color amarilla y negra indicando que nuestro diseño no entra en la pantalla si quieren
-        no le agregue para que ustedes mismos puedan ver que pasa
-         */
         body: SingleChildScrollView(
-            //Agregamos form para poder tener control de algunas acciones sobre muestras cajas de texto
-            child:Form(
-              //Agregamos la llave porque sino no podremos tener ese control que les comento
-            key: keyForm,
+            child: Form(
+                key: keyForm,
+                child: Column(
+                  children: <Widget>[
+                    TextFormField(
+                      enabled: enableTextField,
+                      maxLines: 3,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(labelText: "Titulo"),
+                      controller: ctrlTitle,
+                      maxLength: 200,
+                      validator: validateTitle,
+                    ),
+                    TextFormField(
+                      enabled: enableTextField,
+                      maxLines: 3,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(labelText: "Publicación"),
+                      controller: ctrlBody,
+                      maxLength: 200,
+                      validator: validatePost,
+                    ),
+                    (enableTextField)?FlatButton(
+                      color: Colors.greenAccent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      textColor: Colors.grey,
+                      onPressed: save,
 
-            //Para agregar varias cajas de texto tenemos que usar una columna y de esta manera se ordenaran los widget
-              // de manera vertical
-            child: Column(
-              children: <Widget>[
-                //Para crear una caja de texto usamos TextFormField
-                TextFormField(
-                  //Este atributo es para especificar cuantas lineas queremos que ocupe nuestra caja de texto
-                  maxLines: 3,
-                  //Especificar el tipo de texto que se escribira para que en el teclado este deacuerdo con este
-                  //podemos usar TextInputType.phone, TextInputType.number , TextInputType.datetime, etc.
-                  keyboardType: TextInputType.text,
-
-                  /*Para especificar el texto que tiene que colocar el usuario
-                  hintText -> es para agregar un texto en la caja cuando el usuario escriba se borrara y mostrara el textoa actual
-                  labelText -> muestra el texto que debe colocar el usuario  y cuando escriba se subira en la parte de arriba
-                   */
-                  decoration: InputDecoration(labelText: "Titulo"),
-                  //Agregamos el controlador que creamos anteriormente
-                  controller: ctrlTitle,
-                  //especificar cuantos caracteres puede agregar en la caja el usuario
-                  maxLength: 200,
-                  //Validar aqui debemos de crear un metodo para validar precionen control y clic sobre validateTitle para ir al metodo
-                  validator: validateTitle,
-                ),
-                //Hacemos lo mismo para esta caja
-                TextFormField(maxLines: 3,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(labelText: "Publicación"),
-                  controller: ctrlPost,
-                  maxLength:200 ,
-                  validator: validatePost,
-                ),
-
-                // para crear un botos usamos FlatButton
-                FlatButton(
-                  color: Colors.greenAccent,
-                  /*cuando vemos el atributo "shape" nosotro podemos agregarle formas en este caso el boton tendra
-                  las orillas redondeadas
-                   */
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  //color que quieren que tenga el texto
-                  textColor: Colors.grey,
-                  //Al momento de dar clic sobre el boton nosotros tenemos que
-                  //hacer algo asi que precionamos control y clic sobre save
-                  onPressed: save,
-
-                  padding: EdgeInsets.symmetric(horizontal: 15),
-                  child: Text("Guardar"),
-                )
-              ],
-            ))));
+                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Text("Guardar"),
+                    ):SizedBox.shrink()
+                  ],
+                ))));
   }
 
-  save() {
+  save() async{
+    if (keyForm.currentState.validate()) {
+      var data ;
+      if(post != null) {
+        if(ctrlTitle.text!=post.title || ctrlBody.text!=post.body) {
+           data =  await Post().update(getText(post).toMap());
+        } else {
+          Navigator.pop(context);
+        }
+      }else{
+        data = await Post().save(
+            {
+              "title": ctrlTitle.text,
+              "body": ctrlBody.text,
+              "userId": "${ widget.user.id}"
+            });
+      }
+      if (data != null) error(data);
+    }
+  }
 
-    /*Aqui nosotros atravez de la llave de form podremos validar nuestras cajas de texto
-    el metodo keyForm.currentState.validate() ejecutara todas nuestras validaciones si todo esta bien
-    estonces hara lo que esta dentro del if pero sino mostrara los mensajes de error en cada caja */
-    if(keyForm.currentState.validate()){
-
-      //Aqui obtenemos el texto de cada caja a travez del controlador y lo imprimimos con print
-      print("nombree ${ctrlTitle.text}");
-      print("nombree ${ctrlPost.text}");
-
-      //Con la llave del formulario podemos resetear todas las cajas que se encuentran dentro de esta
-      keyForm.currentState.reset();
-
-      //Navigator sirve para abrir y cerrar ventanas en este caso con pop cerraremos la ventana
+  error(data) {
+    if (data is Widget) {
+      keyScaffold.currentState.showSnackBar(SnackBar(content: data,backgroundColor: Colors.blue,));
+    } else {
+      if(post==null)widget.voidCallBackParam(data);
       Navigator.pop(context);
     }
   }
 
-  String validateTitle(String value) {
-    //la caja de texto no regresara el texto actual en la caja por eso tenemos el parametro value
+  Post getText(Post post) {
+    post.title = ctrlTitle.text;
+    post.body = ctrlBody.text;
+    return post;
+  }
 
-    /*con value.length  podemos obtener cuantos caracteres hay en la caja si el numero es igual
-     a 0 quiere decir que no han escrito nada por lo tanto retornamos un String con el mensaje de que es necesario llenar
-     ese campo */
+  String validateTitle(String value) {
     if (value.length == 0) {
       return "El titulo es requerido";
     }
-
-    //Retonamos null para regresar y decir que no paso nada
     return null;
   }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:connectivity/connectivity.dart';
 import 'package:cursopolitecnica/Common/Constant.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,9 @@ import 'package:flutter/material.dart';
 typedef VoidCallbackParam(var parameter);
 
 class Validate {
+  var data;
+  Validate(this.data);
+
   static Widget errorWidget(String error, {String content = ""}) {
     switch (error) {
       case Constant.CONNECTION_DISABLED:
@@ -24,13 +29,23 @@ class Validate {
         break;
     }
   }
+  int checkInteger(var data){
+    return (data is String)?int.parse(data):data;
+  }
+  isWidget(VoidCallbackParam method){
+    return (data is Widget)?data:(data.isNotEmpty)?method(json.decode(data)):null;
+  }
 
+  keyExists(String key,{var defaul=""}){
+    return (data.containsKey(key) && data[key]!=null)?data[key]:defaul;
+  }
   static emptyMap(parameters){
     return parameters.toString()=="[]"?null:parameters;
   }
 
   static connectionError(
       {VoidCallback method, VoidCallbackParam methodParam,Map parameters}) async {
+
     var connectionResult = await Connectivity().checkConnectivity();
     return (connectionResult == ConnectivityResult.none)
         ? errorWidget(Constant.CONNECTION_DISABLED)

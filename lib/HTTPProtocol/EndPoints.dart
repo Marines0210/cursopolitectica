@@ -2,7 +2,7 @@ import 'package:cursopolitecnica/Common/Constant.dart';
 import 'package:cursopolitecnica/HTTPProtocol/HTTPExecute.dart';
 
 class EndPoint{
-  static getUser(id){
+  static Future getUser(id){
     return HttPExecute(generateEndPointURL("users/$id")).get();
   }
   static getPosts(){
